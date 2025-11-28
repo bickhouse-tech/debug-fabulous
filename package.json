@@ -27,7 +27,7 @@
     "lint": "npm run build && eslint --ext .js,.ts,.tsx *.js src test --color",
     "prepack": "npm run build",
     "prepare": "npx sort-package-json",
-    "test": "npm run build && npx jest",
+    "test": "npm run build && NODE_OPTIONS=--experimental-vm-modules npx jest",
     "test:ci": "npm run build && npm run test --coverage && npm run coveralls",
     "preversion": "npm run build"
   },
