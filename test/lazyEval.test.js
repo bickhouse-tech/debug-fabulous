@@ -1,28 +1,32 @@
-const hook = require('hook-std');
 const config = require('config');
 const debugFact = require('../lib')();
+const { setTimeout } = require('node:timers/promises');
 
 describe('lazyEval', () => {
-  let debug, unhook;
+  let debug, hookStderr;
+  beforeEach(async () => {
+      const hooklib = await import('hook-std');
+      hookStderr = hooklib.hookStderr;
+  });
 
   describe('enabled', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       debugFact.save('enabled');
       debugFact.enable(debugFact.load());
       debug = debugFact('enabled');
       // console.log(debug);
     });
 
-    it('handles functions', (done) => {
-      unhook = hook.stderr((str) => {
+    it('handles functions', () => {
+      const promise = hookStderr((str, unhook) => {
         expect(str.match(/crap/)).toBeTruthy();
         expect(str.match(/enabled/)).toBeTruthy();
-        done();
+        unhook();
       });
       debug(() => {
         return 'crap';
       });
-      unhook();
+      return promise;
     });
 
     it('leak', () => {
@@ -40,46 +44,46 @@ describe('lazyEval', () => {
     });
 
     describe('normal', () => {
-      it('basic', (done) => {
-        unhook = hook.stderr((str) => {
+      it('basic', () => {
+        const promise = hookStderr((str, unhook) => {
           expect(str).toMatch(/crap/);
           expect(str).toMatch(/enabled/);
-          done();
+          unhook();
         });
         debug('crap');
-        unhook();
+        return promise;
       });
 
-      it('formatter / multi arg', (done) => {
-        unhook = hook.stderr((str) => {
+      it('formatter / multi arg', () => {
+        const promise = hookStderr((str, unhook) => {
           expect(str).toMatch(/test hi/);
           expect(str).toMatch(/enabled/);
-          done();
+          unhook();
         });
         debug('test %s', 'hi');
-        unhook();
+        return promise;
       });
     });
 
     describe('lazy', () => {
-      it('basic', (done) => {
-        unhook = hook.stderr((str) => {
+      it('basic', () => {
+        const promise = hookStderr((str, unhook) => {
           expect(str).toMatch(/crap/);
           expect(str).toMatch(/enabled/);
-          done();
+          unhook();
         });
         debug(() => 'crap');
-        unhook();
+        return promise;
       });
 
-      it('formatter / multi arg', (done) => {
-        unhook = hook.stderr((str) => {
+      it('formatter / multi arg', () => {
+        const promise = hookStderr((str, unhook) => {
           expect(str).toMatch(/test hi/);
           expect(str).toMatch(/enabled/);
-          done();
+          unhook();
         });
         debug(() => ['test %s', 'hi']);
-        unhook();
+        return promise;
       });
     });
   });
@@ -91,30 +95,33 @@ describe('lazyEval', () => {
       debug = debugFact('disabled');
     });
 
-    it('handles functions', () => {
+    it('handles functions', async () => {
       let called = false;
 
-      unhook = hook.stderr(() => {
+      hookStderr((out, unhook) => {
+        if(!out.match(/crap/)) return;
         called = true;
+        unhook();
       });
 
       debug(() => {
-        called = true;
         return 'crap';
       });
-      unhook();
+      await setTimeout(50);
       expect(called).toEqual(false);
     });
 
-    it('normal', () => {
+    it('normal', async () => {
       let called = false;
 
-      unhook = hook.stderr(() => {
+      hookStderr((out,unhook) => {
+        if(!out.match(/crap/)) return;
         called = true;
+        unhook();
       });
 
       debug('crap');
-      unhook();
+      await setTimeout(50)
       expect(called).toEqual(false);
     });
   });

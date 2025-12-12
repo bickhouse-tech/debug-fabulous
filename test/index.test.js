@@ -1,12 +1,14 @@
-const hook = require('hook-std');
 const config = require('config');
 
 describe('index / spawn', () => {
-  let rootDbg, unhook;
+  let rootDbg, hookStderr;
 
   describe('namespacing', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       const origDebug = require('../lib')();
+      const hooklib = await import('hook-std');
+      hookStderr = hooklib.hookStderr;
+      
       origDebug.save('root*');
       origDebug.enable(origDebug.load());
 
@@ -14,28 +16,28 @@ describe('index / spawn', () => {
       // console.log(rootDbg);
     });
 
-    it('handles functions', (done) => {
-      unhook = hook.stderr((str) => {
+    it('handles functions', () => {
+      const promise = hookStderr((str, unhook) => {
         expect(str).toBeDefined();
         expect(str.match(/crap/)).toBeTruthy();
         expect(str.match(/root/)).toBeTruthy();
-        done();
+        unhook();
       });
       rootDbg(() => {
         return 'crap';
       });
-      unhook();
+      return promise;
     });
 
-    it('normal', (done) => {
-      unhook = hook.stderr((str) => {
+    it('normal', () => {
+      const promise = hookStderr((str, unhook) => {
         expect(str).toBeTruthy();
         expect(str.match(/crap/)).toBeTruthy();
         expect(str.match(/root/)).toBeTruthy();
-        done();
+        unhook();
       });
       rootDbg('crap');
-      unhook();
+      return promise;
     });
 
     describe('child1', () => {
@@ -45,28 +47,28 @@ describe('index / spawn', () => {
         child1Dbg = rootDbg.spawn('child1');
       });
 
-      it('handles functions', (done) => {
-        unhook = hook.stderr((str) => {
+      it('handles functions', () => {
+        const promise = hookStderr((str, unhook) => {
           expect(str).toBeTruthy();
           expect(str.match(/crap/)).toBeTruthy();
           expect(str.match(/root:child1/)).toBeTruthy();
-          done();
+          unhook();
         });
         child1Dbg(() => {
           return 'crap';
         });
-        unhook();
+        return promise;
       });
 
-      it('normal', (done) => {
-        unhook = hook.stderr((str) => {
+      it('normal', () => {
+        const promise = hookStderr((str, unhook) => {
           expect(str).toBeTruthy();
           expect(str.match(/crap/)).toBeTruthy();
           expect(str.match(/root:child1/)).toBeTruthy();
-          done();
+          unhook();
         });
         child1Dbg('crap');
-        unhook();
+        return promise;
       });
 
       it('leak', () => {
@@ -90,28 +92,28 @@ describe('index / spawn', () => {
           grandChild1 = child1Dbg.spawn('grandChild1');
         });
 
-        it('handles functions', (done) => {
-          unhook = hook.stderr((str) => {
+        it('handles functions', () => {
+          const promise = hookStderr((str, unhook) => {
             expect(str).toBeTruthy();
             expect(str.match(/crap/)).toBeTruthy();
             expect(str.match(/root:child1:grandChild1/)).toBeTruthy();
-            done();
+            unhook();
           });
           grandChild1(() => {
             return 'crap';
           });
-          unhook();
+          return promise;
         });
 
-        it('normal', (done) => {
-          unhook = hook.stderr((str) => {
+        it('normal', () => {
+          const promise = hookStderr((str, unhook) => {
             expect(str).toBeTruthy();
             expect(str.match(/crap/)).toBeTruthy();
             expect(str.match(/root:child1:grandChild1/)).toBeTruthy();
-            done();
+            unhook();
           });
           grandChild1('crap');
-          unhook();
+          return promise;
         });
 
         describe('greatGrandChild1', () => {
@@ -122,28 +124,28 @@ describe('index / spawn', () => {
             // console.log(greatGrandChild1)
           });
 
-          it('handles functions', (done) => {
-            unhook = hook.stderr((str) => {
+          it('handles functions', () => {
+            const promise = hookStderr((str, unhook) => {
               expect(str).toBeTruthy();
               expect(str.match(/crap/)).toBeTruthy();
               expect(str.match(/root:child1:grandChild1:greatGrandChild1/)).toBeTruthy();
-              done();
+              unhook();
             });
             greatGrandChild1(() => {
               return 'crap';
             });
-            unhook();
+            return promise;
           });
 
-          it('normal', (done) => {
-            unhook = hook.stderr((str) => {
+          it('normal', () => {
+            const promise = hookStderr((str, unhook) => {
               expect(str).toBeTruthy();
               expect(str.match(/crap/)).toBeTruthy();
               expect(str.match(/root:child1:grandChild1:greatGrandChild1/)).toBeTruthy();
-              done();
+              unhook();
             });
             greatGrandChild1('crap');
-            unhook();
+            return promise;
           });
         });
       });
