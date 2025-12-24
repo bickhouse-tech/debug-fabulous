@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file. See [commit
 
 ## 2.0.25 (2025-12-24)
 
+## 2.0.25 (2025-12-24)
+
 ## 2.0.24 (2025-12-24)
 
 ## 2.0.23 (2025-12-24)
