@@ -9,7 +9,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/brickhouse-tech/debug-fabulous.git"
+    "url": "git+https://github.com/brickhouse-tech/debug-fabulous.git"
   },
   "license": "MIT",
   "author": "Nicholas McCready",
