@@ -5,20 +5,18 @@ on:
     tags:
       - "v*"
 
-permissions:
-  id-token: write  # Required for OIDC
-  contents: read
-
 jobs:
   tests:
     uses: ./.github/workflows/tests.yml
   publish-npm:
     needs: [tests]
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
